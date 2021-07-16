@@ -987,6 +987,8 @@ class MonoCalibrator(Calibrator):
                     else:
                         self.good_corners.append((corners, None, board))
                     print(("*** Added sample %d, p_x = %.3f, p_y = %.3f, p_size = %.3f, skew = %.3f" % tuple([len(self.db)] + params)))
+                    cv2.imwrite("/home/joe/Desktop/ueye_calib/frame_" + str(len(self.db)).zfill(5) + ".png",gray)
+                    print("Saved Image to: /home/joe/Desktop/ueye_calib/frame_" + str(len(self.db)).zfill(5) + ".png")
 
         self.last_frame_corners = corners
         self.last_frame_ids = ids
