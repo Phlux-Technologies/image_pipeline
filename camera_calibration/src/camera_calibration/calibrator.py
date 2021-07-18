@@ -525,7 +525,8 @@ class Calibrator(object):
         # Scale the input image down to ~VGA size
         height = img.shape[0]
         width = img.shape[1]
-        scale = math.sqrt( (width*height) / (640.*480.) )
+        # scale = math.sqrt( (width*height) / (640.*480.) )
+        scale = 1.25
         if scale > 1.0:
             scrib = cv2.resize(img, (int(width / scale), int(height / scale)))
         else:
@@ -977,9 +978,18 @@ class MonoCalibrator(Calibrator):
             if corners is not None:
                 # Draw (potentially downsampled) corners onto display image
                 if board.pattern == "charuco":
-                    cv2.aruco.drawDetectedCornersCharuco(scrib, downsampled_corners, ids)
+                    cv2.aruco.drawDetectedCornersCharuco(scrib, downsampled_corners, ids, (0, 0, 255))
+                    # cv2.aruco.drawDetectedMarkers(scrib, downsampled_corners, ids)
+
                 else:
                     cv2.drawChessboardCorners(scrib, (board.n_cols, board.n_rows), downsampled_corners, True)
+
+                height = scrib.shape[0]
+                width = scrib.shape[1]
+                scale = math.sqrt( (width*height) / (640.*480.) )
+                # scale = 1.0
+                if scale > 1.0:
+                    scrib = cv2.resize(scrib, (int(width / scale), int(height / scale)))
 
                 # Add sample to database only if it's sufficiently different from any previous sample.
                 params = self.get_parameters(corners, ids, board, (gray.shape[1], gray.shape[0]))
@@ -990,11 +1000,14 @@ class MonoCalibrator(Calibrator):
                     else:
                         self.good_corners.append((corners, None, board))
                     print(("*** Added sample %d, p_x = %.3f, p_y = %.3f, p_size = %.3f, skew = %.3f" % tuple([len(self.db)] + params)))
+                    cv2.imwrite("/home/joe/Desktop/ueye_calib/frame_" + str(len(self.db)).zfill(5) + ".png",gray)
+                    print("Saved Image to: /home/joe/Desktop/ueye_calib/frame_" + str(len(self.db)).zfill(5) + ".png")
 
         self.last_frame_corners = corners
         self.last_frame_ids = ids
         rv = MonoDrawable()
         rv.scrib = scrib
+        cv2.imwrite("/home/joe/Desktop/ueye_calib/scrib_" + str(len(self.db)).zfill(5) + ".png",scrib)
         rv.params = self.compute_goodenough()
         rv.linear_error = linear_error
         return rv
