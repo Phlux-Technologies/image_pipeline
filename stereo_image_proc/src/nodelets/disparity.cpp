@@ -121,7 +121,7 @@ void DisparityNodelet::onInit()
                                                  sub_l_image_, sub_l_info_,
                                                  sub_r_image_, sub_r_info_) );
     approximate_sync_->registerCallback(boost::bind(&DisparityNodelet::imageCb,
-                                                    this, _1, _2, _3, _4));
+                                                    this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4));
   }
   else
   {
@@ -129,12 +129,12 @@ void DisparityNodelet::onInit()
                                      sub_l_image_, sub_l_info_,
                                      sub_r_image_, sub_r_info_) );
     exact_sync_->registerCallback(boost::bind(&DisparityNodelet::imageCb,
-                                              this, _1, _2, _3, _4));
+                                              this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4));
   }
 
   // Set up dynamic reconfiguration
   ReconfigureServer::CallbackType f = boost::bind(&DisparityNodelet::configCb,
-                                                  this, _1, _2);
+                                                  this, boost::placeholders::_1, boost::placeholders::_2);
   reconfigure_server_.reset(new ReconfigureServer(config_mutex_, private_nh));
   reconfigure_server_->setCallback(f);
 
@@ -231,9 +231,11 @@ void DisparityNodelet::imageCb(const ImageConstPtr& l_image_msg,
   model_.fromCameraInfo(l_info_msg, r_info_msg);
 
   // Allocate new disparity image message
-  DisparityImagePtr disp_msg = boost::make_shared<DisparityImage>();
-  disp_msg->header         = l_info_msg->header;
-  disp_msg->image.header   = l_info_msg->header;
+  DisparityImagePtr disp_msg      = boost::make_shared<DisparityImage>();
+  disp_msg->header                = l_info_msg->header;
+  disp_msg->header.frame_id       = l_image_msg->header.frame_id;
+  disp_msg->image.header          = l_info_msg->header;
+  disp_msg->image.header.frame_id = l_image_msg->header.frame_id;
 
   // Compute window of (potentially) valid disparities
   int border   = block_matcher_.getCorrelationWindowSize() / 2;
@@ -327,5 +329,5 @@ void DisparityNodelet::configCb(Config &config, uint32_t level)
 } // namespace stereo_image_proc
 
 // Register nodelet
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(stereo_image_proc::DisparityNodelet,nodelet::Nodelet)
