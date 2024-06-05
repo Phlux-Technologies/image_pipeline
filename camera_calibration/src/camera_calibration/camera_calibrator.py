@@ -351,12 +351,14 @@ class OpenCVCalibrationNode(CalibrationNode):
 
     def redraw_stereo(self, drawable):
         height = drawable.lscrib.shape[0]
-        width = drawable.lscrib.shape[1]
+        width_left = drawable.lscrib.shape[1]
+        width_right = drawable.rscrib.shape[1]
 
-        display = numpy.zeros((max(480, height), 2 * width + 100, 3), dtype=numpy.uint8)
-        display[0:height, 0:width,:] = drawable.lscrib
-        display[0:height, width:2*width,:] = drawable.rscrib
-        display[0:height, 2*width:2*width+100,:].fill(255)
+
+        display = numpy.zeros((max(480, height), width_left + width_right + 100, 3), dtype=numpy.uint8)
+        display[0:height, 0:width_left,:] = drawable.lscrib
+        display[0:height, width_left:(width_left + width_right),:] = drawable.rscrib
+        display[0:height, (width_left + width_right):(width_left + width_right)+100,:].fill(255)
 
         self.buttons(display)
 
@@ -364,26 +366,26 @@ class OpenCVCalibrationNode(CalibrationNode):
             if drawable.params:
                 for i, (label, lo, hi, progress) in enumerate(drawable.params):
                     (w,_) = self.getTextSize(label)
-                    self.putText(display, label, (2 * width + (100 - w) // 2, self.y(i)))
+                    self.putText(display, label, (width_left + width_right + (100 - w) // 2, self.y(i)))
                     color = (0,255,0)
                     if progress < 1.0:
                         color = (0, int(progress*255.), 255)
                     cv2.line(display,
-                            (int(2 * width + lo * 100), self.y(i) + 20),
-                            (int(2 * width + hi * 100), self.y(i) + 20),
+                            (int(width_left + width_right + lo * 100), self.y(i) + 20),
+                            (int(width_left + width_right + hi * 100), self.y(i) + 20),
                             color, 4)
 
         else:
-            self.putText(display, "epi.", (2 * width, self.y(0)))
+            self.putText(display, "epi.", (width_left + width_right, self.y(0)))
             if drawable.epierror == -1:
                 msg = "?"
             else:
                 msg = "%.2f" % drawable.epierror
-            self.putText(display, msg, (2 * width, self.y(1)))
+            self.putText(display, msg, (width_left + width_right, self.y(1)))
             # TODO dim is never set anywhere. Supposed to be observed chessboard size?
             if drawable.dim != -1:
-                self.putText(display, "dim", (2 * width, self.y(2)))
-                self.putText(display, "%.3f" % drawable.dim, (2 * width, self.y(3)))
+                self.putText(display, "dim", (width_left + width_right, self.y(2)))
+                self.putText(display, "%.3f" % drawable.dim, (width_left + width_right, self.y(3)))
 
         self._last_display = display
         self.queue_display.put(display)
